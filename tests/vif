@@ -1,0 +1,15 @@
+#!/bin/sh
+# Stands in for the game: records its arguments and its process, draws on the
+# alternate screen as the game does, stays if told to, prints what it is told to
+# and exits as told
+printf '%s\n' "$@" > "$VIF_TEST_DIR/args"
+echo $$ > "$VIF_TEST_DIR/pid"
+printf '\033[?1049hgame'
+if [ -n "$VIF_TEST_STAY" ]; then
+  exec sleep "$VIF_TEST_STAY"
+fi
+printf '\033[?1049l'
+if [ -n "$VIF_TEST_PRINT" ]; then
+  echo "$VIF_TEST_PRINT" >&2
+fi
+exit "${VIF_TEST_STATUS:-0}"
