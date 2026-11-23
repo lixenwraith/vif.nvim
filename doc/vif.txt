@@ -1,0 +1,109 @@
+*vif.txt*	Play vif in a Neovim terminal buffer
+
+vif.nvim							    *vif.nvim*
+
+vif is a real-time typing shooter played with vi-style motions, in a terminal
+among other places: https://github.com/lixenwraith/vif. This plugin runs its
+terminal build in a floating window or a tab page and gets out of its way.
+
+It needs Neovim 0.11 or newer, for |jobstart()|'s `term`, and refuses to open
+the game in an older one. It needs the game's binary and never downloads it:
+`vif` from `$PATH` or the path |vif-options| names. The game comes from a
+release archive at https://github.com/lixenwraith/vif/releases, from the AUR
+(`vif`) or FreeBSD ports (`games/vif`) once it is packaged there, or >sh
+	go install github.com/lixenwraith/vif/cmd/vif@latest
+<
+==============================================================================
+COMMAND								 *vif-command*
+
+:Vif [args]								*:Vif*
+	Open the game and enter |Terminal-mode|. The arguments go to the game
+	as on a command line, after the default ones of |vif-options|: >vim
+		:Vif
+		:Vif -s td
+		:Vif -join=vifs://host:7777/game
+		:Vif -spectate=vifs://host:7777/game
+<
+	`vif -h` in a shell lists the game's flags. The game leaves as it does
+	in a terminal: `:q`, or Ctrl-Q.
+
+	The window closes when the game exits. When it exits with an error,
+	what it printed is shown as an error message, which |:messages| keeps.
+	Closing the window ends the game.
+
+	A flag that only prints and exits (`-h`, `-version`, `-check`) shows
+	nothing here: its text closes with the window. Use |:!| for those.
+
+require('vif').open({args})					  *vif.open()*
+	What |:Vif| does, {args} a list of the game's arguments or nil.
+
+==============================================================================
+OPTIONS								 *vif-options*
+
+require('vif').setup({opts})					 *vif.setup()*
+	Optional: without it the defaults below stand, as does each one
+	{opts} leaves out. >lua
+		require('vif').setup({
+		  bin = 'vif',
+		  args = {},
+		  layout = 'float',
+		  float = { width = 0.9, height = 0.9, border = 'rounded' },
+		  leave = [[<C-\><C-n>]],
+		})
+<
+	bin	The game: a name looked up in `$PATH`, or a path.
+	args	Arguments every game starts with, ahead of |:Vif|'s own, as
+		`{ '-mute' }`. The game takes the last of a flag given twice,
+		so the command's win.
+	layout	`'float'` for a floating window, `'tab'` for a tab page.
+	float	The floating window: `width` and `height` are a share of the
+		editor up to 1 and a count of cells above it, and `border` is
+		what |nvim_open_win()| takes, `'none'` for no border.
+	leave	A key that leaves Terminal mode, as CTRL-\ CTRL-N does.
+
+	A `vif.toml` saying `[presentation] window = true`, or a `vif-gui`
+	build, opens the game's own desktop window instead of drawing in the
+	buffer: `args = { '-cli' }` keeps it in the terminal.
+
+==============================================================================
+KEYS								    *vif-keys*
+
+In Terminal mode every key goes to the game except the ones a |:tmap| takes.
+The game's buffer maps <Esc>, CTRL-H, CTRL-J, CTRL-K, CTRL-L and CTRL-W to
+themselves, so a global map of one, as `tnoremap <Esc> <C-\><C-n>` or window
+navigation, does not take it from the game. Any other global Terminal-mode
+map still applies there.
+
+The `leave` key of |vif-options|, CTRL-\ CTRL-N by default, goes to Normal
+mode with the game still running, where |i| goes back to it.
+
+==============================================================================
+IN A NEOVIM TERMINAL					       *vif-terminal*
+
+The game plays as in a terminal of its own, with these differences.
+
+Colors							          *vif-colors*
+	Neovim's terminal shows 24-bit color only with 'termguicolors', so
+	the game is started with `-color true` when the option is on and
+	`-color 256` when it is off. Neovim turns the option on by itself, as
+	it finishes starting, in a terminal it finds able: `nvim +Vif` from a
+	shell opens the game then, not before.
+
+Held keys						           *vif-holds*
+	Neovim's terminal passes on no key release, so a key held down is a
+	run of taps at the keyboard's repeat rate, as in tmux. It tells the
+	game otherwise, so the game shows no notice of it.
+
+Mouse								   *vif-mouse*
+	Presses, drags and the wheel reach the game at the cell under the
+	pointer. The pointer moving with no button down reaches it only with
+	'mousemoveevent' set, which the game's cursor needs to follow the
+	pointer.
+
+==============================================================================
+HEALTH								  *vif-health*
+
+`:checkhealth vif` reports Neovim's version against the minimum, the game's
+binary with its `vif -version`, and whether 'termguicolors' is on.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
